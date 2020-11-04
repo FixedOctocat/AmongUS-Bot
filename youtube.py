@@ -1,5 +1,14 @@
 from youtubesearchpython import SearchVideos
 import youtube_dl
+import re
+
+regex = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 ydl_opts = {
     'quiet': True,
@@ -22,18 +31,36 @@ def search(arg):
 
 
 def download(url):
-    while True:
-        try:
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=True )
-                video_title = info_dict.get('title', None)
-            return video_title
-        except Exception as e:
-            print(e)
+    if re.match(regex, url) is not None:
+        while True:
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=True)
+                    video_title = info_dict.get('title', None)
+                return video_title
+            except Exception as e:
+                print(e)
+    else:
+        raise TypeError("This is not correct url")
+
+
+def music_title(url):
+    if re.match(regex, url) is not None:
+        while True:
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=False)
+                    video_title = info_dict.get('title', None)
+                return video_title
+            except Exception as e:
+                print(e)
+    else:
+        raise TypeError("This is not correct url")
 
 
 if __name__ == '__main__':
     url1 = "https://www.youtube.com/watch?v=9fN7udMAMog"
     url2 = "www.youtube.com/watch?v=Suu9I9TNdnE"
-    a = download(url1)
+    url3 = "https://www.youtube.com/watch?v=qSjT5sEcfCI&ab_channel=RachelCSGO"
+    a = music_title(url3)
     print(a)
