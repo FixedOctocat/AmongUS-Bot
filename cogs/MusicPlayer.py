@@ -23,32 +23,66 @@ class MusicPlayer(commands.Cog):
         voice = get(self.bot.voice_clients, guild=ctx.guild)
         self.ctx = ctx
         global video_choice
-
         if voice is None:
             await channel.connect()
         elif voice and voice.is_connected():
             await voice.move_to(channel)
 
-        song_there = os.path.isfile("song.mp3")
+        voice = get(self.bot.voice_clients, guild=ctx.guild)
+        option = None
         try:
-            if song_there:
-                os.remove("song.mp3")
-                await ctx.send("Preparing song")
-        except PermissionError:
-            await ctx.send("Song is playing now. Your song will be in queue")
-            global video_choice
+            if music[-1].isdigit() and music[-2] == '=' and music[-3] == ' ':
+                option = int(music[-1])
+                music = music[:-3]
+        except Exception as e:
+            pass
+
+        if option is None:
+            song_there = os.path.isfile("song.mp3")
+            try:
+                if song_there:
+                    os.remove("song.mp3")
+                    await ctx.send("Preparing song")
+            except PermissionError:
+                await ctx.send("Song is playing now. Your song will be in queue")
+                global video_choice
+                if music.isdigit():
+                    if int(music) > len(video_choice):
+                        await ctx.send("Wrong option")
+                        return
+                    else:
+                        music = video_choice[int(music) - 1]
+
+                video_choice = {}
+                try:
+                    title = music_title(music)
+                    song_queue.append([title, music])
+                    await ctx.send("{} was placed in queue".format(title))
+                except Exception as e:
+                    print(e)
+                    videos = search(music)
+                    embed = discord.Embed(title="Select song", color=0x0ff0ff)
+                    for i in range(len(videos)):
+                        embed.add_field(name="** **", value="**{}**. {} | {}".format(i + 1, videos[i][3], videos[i][5]),
+                                        inline=False)
+                        video_choice[i] = videos[i][2]
+                    await ctx.send(embed=embed)
+                return
+
             if music.isdigit():
                 if int(music) > len(video_choice):
                     await ctx.send("Wrong option")
                     return
                 else:
-                    music = video_choice[int(music) - 1]
+                    music = video_choice[int(music)-1]
 
             video_choice = {}
             try:
-                title = music_title(music)
-                song_queue.append([title, music])
-                await ctx.send("{} was placed in queue".format(title))
+                voice = get(self.bot.voice_clients, guild=ctx.guild)
+                title = download(music)
+                await ctx.send("Downloading music")
+                await ctx.send("{} is playing now".format(title))
+                voice.play(discord.FFmpegPCMAudio("song.mp3"))
             except Exception as e:
                 print(e)
                 videos = search(music)
@@ -58,31 +92,31 @@ class MusicPlayer(commands.Cog):
                                     inline=False)
                     video_choice[i] = videos[i][2]
                 await ctx.send(embed=embed)
-            return
+        else:
+            videos = search(music)
+            for i in range(len(videos)):
+                video_choice[i] = videos[i][2]
 
-        if music.isdigit():
-            if int(music) > len(video_choice):
+            if option > len(video_choice):
                 await ctx.send("Wrong option")
                 return
             else:
-                music = video_choice[int(music)-1]
+                music = video_choice[option - 1]
 
-        video_choice = {}
-        try:
-            voice = get(self.bot.voice_clients, guild=ctx.guild)
-            title = download(music)
-            await ctx.send("Downloading music")
-            await ctx.send("{} is playing now".format(title))
-            voice.play(discord.FFmpegPCMAudio("song.mp3"))
-        except Exception as e:
-            print(e)
-            videos = search(music)
-            embed = discord.Embed(title="Select song", color=0x0ff0ff)
-            for i in range(len(videos)):
-                embed.add_field(name="** **", value="**{}**. {} | {}".format(i + 1, videos[i][3], videos[i][5]),
-                                inline=False)
-                video_choice[i] = videos[i][2]
-            await ctx.send(embed=embed)
+            song_there = os.path.isfile("song.mp3")
+            try:
+                if song_there:
+                    os.remove("song.mp3")
+                    await ctx.send("Preparing song")
+                await ctx.send("Downloading music")
+                title = download(music)
+                await ctx.send("{} is playing now".format(title))
+                voice.play(discord.FFmpegPCMAudio("song.mp3"))
+            except PermissionError:
+                await ctx.send("Song is playing now. Your song will be in queue")
+                title = music_title(music)
+                song_queue.append([title, music])
+                await ctx.send("{} was placed in queue".format(title))
 
     @commands.command(pass_context=True, aliases=['pa', 'p_'])
     async def pause(self, ctx):
@@ -142,10 +176,13 @@ class MusicPlayer(commands.Cog):
             else:
                 await ctx.send("Bad index")
 
-        embed = discord.Embed(title="Song queue", color=0x0ff0ff)
-        for i in range(len(song_queue)):
-            embed.add_field(name="** **", value="**{}**. {}".format(i + 1, song_queue[i][0]), inline=False)
-        await ctx.send(embed=embed)
+        if len(song_queue) > 0:
+            embed = discord.Embed(title="Song queue", color=0x0ff0ff)
+            for i in range(len(song_queue)):
+                embed.add_field(name="** **", value="**{}**. {}".format(i + 1, song_queue[i][0]), inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("No music in queue")
 
     @commands.command(pass_context=True, aliases=['n', 'nex', 'next'])
     async def next_song(self, ctx):
@@ -156,22 +193,20 @@ class MusicPlayer(commands.Cog):
 
         if voice and voice.is_playing():
             voice.stop()
-            sleep(0.5)
-            song_there = os.path.isfile("song.mp3")
-            if song_there:
-                os.remove("song.mp3")
-                await ctx.send("Preparing song")
 
-            await ctx.send("Next Song")
-            await ctx.send("Downloading music")
-            music = song_queue[0]
-            song_queue.remove(music)
-            title = download(music[1])
-            voice.play(discord.FFmpegPCMAudio("song.mp3"))
-            await ctx.send("{} is playing now".format(title))
-        else:
-            await ctx.send("Join voice channel")
-            return
+        sleep(0.5)
+        song_there = os.path.isfile("song.mp3")
+        if song_there:
+            os.remove("song.mp3")
+            await ctx.send("Preparing song")
+
+        await ctx.send("Next Song")
+        await ctx.send("Downloading music")
+        music = song_queue[0]
+        song_queue.remove(music)
+        title = download(music[1])
+        voice.play(discord.FFmpegPCMAudio("song.mp3"))
+        await ctx.send("{} is playing now".format(title))
 
 
 def setup(bot):
