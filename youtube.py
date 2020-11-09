@@ -58,9 +58,23 @@ def music_title(url):
         raise TypeError("This is not correct url")
 
 
+def music_duration(url):
+    if re.match(regex, url) is not None:
+        while True:
+            try:
+                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=False)
+                    video_duration = info_dict.get('duration', None)
+                return video_duration
+            except Exception as e:
+                print(e)
+    else:
+        raise TypeError("This is not correct url")
+
+
 if __name__ == '__main__':
     url1 = "https://www.youtube.com/watch?v=9fN7udMAMog"
     url2 = "www.youtube.com/watch?v=Suu9I9TNdnE"
-    url3 = "https://www.youtube.com/watch?v=qSjT5sEcfCI&ab_channel=RachelCSGO"
-    a = music_title(url3)
+    url3 = "https://www.youtube.com/watch?v=S8KqHUQUOKI&ab_channel=iMiles"
+    a = music_duration("https://www.youtube.com/watch?v=sA6NDPKVg6g")
     print(a)

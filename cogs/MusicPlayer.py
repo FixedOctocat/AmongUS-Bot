@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from discord.utils import get
-from youtube import search, download, music_title
+from youtube import search, download, music_title, music_duration
 from time import sleep
 
 video_choice = {}
@@ -54,14 +54,17 @@ class MusicPlayer(commands.Cog):
             await ctx.send("Song is playing now. Your song will be in queue")
 
         try:
-            if song_play:
-                title = music_title(music)
-                song_queue.append([title, music])
-                await ctx.send("{} was placed in queue".format(title))
+            if int(music_duration(music)) < 800:
+                if song_play:
+                    title = music_title(music)
+                    song_queue.append([title, music])
+                    await ctx.send("{} was placed in queue".format(title))
+                else:
+                    title = download(music)
+                    await ctx.send("{} is playing now".format(title))
+                    voice.play(discord.FFmpegPCMAudio("song.mp3"))
             else:
-                title = download(music)
-                await ctx.send("{} is playing now".format(title))
-                voice.play(discord.FFmpegPCMAudio("song.mp3"))
+                await ctx.send("Song too long")
         except Exception as e:
             print(e)
             if option is None:
@@ -84,14 +87,17 @@ class MusicPlayer(commands.Cog):
                 else:
                     music = video_choice[option - 1]
 
-                if song_play:
-                    title = music_title(music)
-                    song_queue.append([title, music])
-                    await ctx.send("{} was placed in queue".format(title))
+                if int(music_duration(music)) < 800:
+                    if song_play:
+                        title = music_title(music)
+                        song_queue.append([title, music])
+                        await ctx.send("{} was placed in queue".format(title))
+                    else:
+                        title = download(music)
+                        await ctx.send("{} is playing now".format(title))
+                        voice.play(discord.FFmpegPCMAudio("song.mp3"))
                 else:
-                    title = download(music)
-                    await ctx.send("{} is playing now".format(title))
-                    voice.play(discord.FFmpegPCMAudio("song.mp3"))
+                    await ctx.send("Song too long")
         return
 
     @commands.command(pass_context=True, aliases=['pa', 'p_'])
@@ -186,10 +192,6 @@ class MusicPlayer(commands.Cog):
             await ctx.send("{} is playing now".format(title))
         else:
             await ctx.send("No song in queue")
-
-    def play_next(self, ctx):
-        self.next_song(ctx)
-        return
 
 
 def setup(bot):
