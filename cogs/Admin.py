@@ -49,7 +49,13 @@ class Admin(commands.Cog):
             score = self.users[ctx.author.id].set_rate(rate, delta)
 
             if self.users[ctx.author.id].falls == 3:
+                await ctx.channel.send('{} was kicked'.format(ctx.author.name))
+                self.users[ctx.author.id].falls = 0
                 await self.bot.kick(ctx.author.name)
+
+            if int(delta.seconds) > 30:
+                if self.users[ctx.author.id].falls > 0:
+                    self.users[ctx.author.id].falls -= 1
 
             if int(delta.seconds) > 10:
                 self.users[ctx.author.id].banned = False
@@ -67,7 +73,8 @@ class Admin(commands.Cog):
                 if self.users[ctx.author.id].falls == 1:
                     await ctx.channel.send('{}, can you stop spamming? You have 1 fall'.format(ctx.author))
                 elif self.users[ctx.author.id].falls == 2:
-                    await ctx.channel.send('{}, can you stop spamming? You have 2 falls, if you write something, you will be kicked.'.format(ctx.author))
+                    await ctx.channel.send('{}, can you stop spamming? You have 2 falls, if you write something, '
+                                           'you will be kicked.'.format(ctx.author))
         else:
             self.users[ctx.author.id] = User(ctx)
 
