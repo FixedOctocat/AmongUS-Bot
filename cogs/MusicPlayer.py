@@ -210,7 +210,7 @@ class MusicPlayer(commands.Cog):
         embed.add_field(name="{}next".format(BOT_PREFIX),
                         value="play next song in queue", inline=False)
         embed.add_field(name="{}queue".format(BOT_PREFIX),
-                        value="show queue, can be used with delete and set tags", inline=False)
+                        value="show queue, can be used with 'delete {}' and 'set {} {}' tags", inline=False)
         await ctx.send(embed=embed)
 
 
