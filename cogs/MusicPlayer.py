@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord.utils import get
 from youtube import search, download, music_title, music_duration
 from time import sleep
+from config import BOT_PREFIX
 
 video_choice = {}
 song_queue = []
@@ -155,6 +156,8 @@ class MusicPlayer(commands.Cog):
                 music = song_queue[ind_1-1]
                 song_queue.remove(music)
                 song_queue.insert(ind_2-1, music)
+            elif ind_1 is None or ind_2 is None:
+                await ctx.send("You should provide two numbers")
             else:
                 await ctx.send("Bad index")
 
@@ -192,6 +195,23 @@ class MusicPlayer(commands.Cog):
             await ctx.send("{} is playing now".format(title))
         else:
             await ctx.send("No song in queue")
+
+    @commands.command(pass_context=True, aliases=['h'])
+    async def help(self, ctx):
+        embed = discord.Embed(title="Music cog help", color=0x0ff0ff)
+        embed.add_field(name="{}play".format(BOT_PREFIX),
+                        value="play song, you should give url or name. Can be used with =1 tag", inline=False)
+        embed.add_field(name="{}pause".format(BOT_PREFIX),
+                        value="pause song, you can resume song with !resume command", inline=False)
+        embed.add_field(name="{}resume".format(BOT_PREFIX),
+                        value="resume song after !pause command", inline=False)
+        embed.add_field(name="{}stop".format(BOT_PREFIX),
+                        value="song can`t be resumed", inline=False)
+        embed.add_field(name="{}next".format(BOT_PREFIX),
+                        value="play next song in queue", inline=False)
+        embed.add_field(name="{}queue".format(BOT_PREFIX),
+                        value="show queue, can be used with delete and set tags", inline=False)
+        await ctx.send(embed=embed)
 
 
 def setup(bot):

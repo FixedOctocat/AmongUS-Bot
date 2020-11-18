@@ -2,6 +2,7 @@ from discord.ext import commands
 from config import TOKEN, BOT_PREFIX
 
 bot = commands.Bot(command_prefix=BOT_PREFIX)
+bot.remove_command('help')
 
 
 @bot.event
